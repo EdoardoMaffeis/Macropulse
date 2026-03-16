@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MacroPulse — Financial Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:    #0a0c0f;
+    --bg1:   #0f1217;
+    --bg2:   #141820;
+    --bg3:   #1c2230;
+    --border:  #1e2736;
+    --border2: #2a3547;
+    --text:  #c8d4e8;
+    --text2: #7a8fa8;
+    --text3: #3d4f65;
+    --accent:  #00d4ff;
+    --green:   #00c57a;
+    --green2:  #003d26;
+    --red:     #ff4757;
+    --red2:    #3d0f16;
+    --amber:   #ffa940;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--mono); min-height: 100vh; }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:999;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.025) 2px,rgba(0,0,0,0.025) 4px);
+  }
+
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 24px; border-bottom:1px solid var(--border);
+    background:var(--bg1); position:sticky; top:0; z-index:100;
+  }
+  .brand { font-size:14px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); }
+  .brand-sub { font-size:9px; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; margin-top:3px; }
+  .header-right { display:flex; align-items:center; gap:22px; }
+  .live { display:flex; align-items:center; gap:7px; font-size:10px; color:var(--green); letter-spacing:1px; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 7px var(--green); animation:blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+  .clock { font-size:11px; color:var(--text2); }
+
+  .main { max-width:980px; margin:0 auto; padding:22px 18px 52px; display:flex; flex-direction:column; gap:18px; }
+
+  .panel { background:var(--bg1); border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+  .panel-hd {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; border-bottom:1px solid var(--border); background:var(--bg2);
+  }
+  .panel-title {
+    font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+    display:flex; align-items:center; gap:9px;
+  }
+  .panel-title::before { content:''; width:3px; height:11px; background:var(--accent); border-radius:1px; display:inline-block; }
+  .panel-meta { font-size:10px; color:var(--text3); letter-spacing:0.5px; }
+
+  /* TABLE */
+  table { width:100%; border-collapse:collapse; font-size:12px; }
+  thead th { padding:7px 16px; text-align:left; font-size:10px; font-weight:500; color:var(--text3); letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--border2); white-space:nowrap; }
+  thead th.r { text-align:right; }
+  tbody tr { border-bottom:1px solid var(--border); transition:background 0.1s; }
+  tbody tr:last-child { border-bottom:none; }
+  tbody tr:hover { background:var(--bg3); }
+  td { padding:8px 16px; vertical-align:middle; }
+  td.r { text-align:right; }
+  .date-row td { padding:6px 16px; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); background:var(--bg2); border-bottom:1px solid var(--border); }
+
+  .dots { display:flex; gap:3px; }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--border2); }
+  .dot.h { background:var(--red); box-shadow:0 0 4px var(--red); }
+  .dot.m { background:var(--amber); }
+  .dot.on { background:var(--text3); }
+
+  .badge { display:inline-block; font-size:10px; padding:2px 7px; border-radius:2px; font-weight:500; letter-spacing:0.5px; }
+  .b-beat   { background:var(--green2); color:var(--green);   border:1px solid #00c57a2a; }
+  .b-miss   { background:var(--red2);   color:var(--red);     border:1px solid #ff47572a; }
+  .b-neut   { background:var(--bg3);    color:var(--text2);   border:1px solid var(--border2); }
+  .b-pend   { background:transparent;   color:var(--text3);   border:1px solid var(--border); font-style:italic; }
+
+  .v-beat   { color:var(--green); }
+  .v-miss   { color:var(--red); }
+  .v-dim    { color:var(--text2); }
+  .v-pend   { color:var(--text3); }
+  .v-accent { color:var(--accent); font-weight:500; }
+
+  /* RATES */
+  .rates-grid { display:grid; grid-template-columns:repeat(3,1fr); }
+  .rate-card { padding:15px 18px 13px; border-right:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .rate-card:nth-child(3n) { border-right:none; }
+  .rate-card:nth-child(4),.rate-card:nth-child(5),.rate-card:nth-child(6) { border-bottom:none; }
+  .rc-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+  .rc-bank { font-size:10px; color:var(--text3); letter-spacing:0.8px; text-transform:uppercase; }
+  .rc-flag { font-size:17px; line-height:1; }
+  .rc-val { font-size:26px; font-weight:600; color:var(--accent); letter-spacing:-1px; line-height:1; margin-bottom:4px; }
+  .rc-chg { font-size:11px; margin-bottom:11px; }
+  .rc-div { height:1px; background:var(--border); margin-bottom:9px; }
+  .rc-lbl { font-size:9px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; margin-bottom:3px; }
+  .rc-date { font-size:12px; color:var(--text); }
+  .rc-exp { font-size:11px; color:var(--text2); margin-top:2px; }
+
+  /* EARNINGS */
+  .ern-hd { display:flex; align-items:center; padding:7px 16px; border-bottom:1px solid var(--border2); background:var(--bg2); gap:0; }
+  .ern-hd span { font-size:10px; font-weight:500; color:var(--text3); letter-spacing:1px; text-transform:uppercase; }
+  .week-lbl { padding:6px 16px; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); background:var(--bg2); border-bottom:1px solid var(--border); border-top:1px solid var(--border); }
+  .week-lbl:first-child { border-top:none; }
+  .ern-row { display:flex; align-items:center; padding:8px 16px; border-bottom:1px solid var(--border); transition:background 0.1s; gap:0; }
+  .ern-row:hover { background:var(--bg3); }
+  .e-tick  { width:72px; font-size:12px; font-weight:600; color:var(--accent); flex-shrink:0; }
+  .e-name  { flex:1; font-size:12px; color:var(--text2); }
+  .e-time  { width:90px; font-size:10px; color:var(--text3); text-align:center; flex-shrink:0; }
+  .e-num   { width:88px; font-size:12px; text-align:right; flex-shrink:0; }
+  .e-sur   { width:68px; text-align:right; flex-shrink:0; }
+
+  .footer { text-align:center; padding:18px; font-size:10px; color:var(--text3); letter-spacing:0.5px; border-top:1px solid var(--border); margin-top:4px; }
+
+  @media(max-width:680px) {
+    .rates-grid { grid-template-columns:1fr 1fr; }
+    .rate-card:nth-child(2n) { border-right:none; }
+    .rate-card:nth-child(3n) { border-right:1px solid var(--border); }
+    .e-num:nth-child(4) { display:none; }
+  }
+  @media(max-width:480px) {
+    .rates-grid { grid-template-columns:1fr; }
+    .rate-card { border-right:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="brand">MacroPulse</div>
+    <div class="brand-sub">Financial Intelligence Dashboard</div>
+  </div>
+  <div class="header-right">
+    <nav style="display:flex;gap:6px;">
+      <a href="index.html" style="font-family:var(--mono);font-size:11px;color:var(--accent);text-decoration:none;padding:5px 12px;border:1px solid var(--accent);border-radius:2px;letter-spacing:1px;text-transform:uppercase;background:rgba(0,212,255,0.05)">Dashboard</a>
+      <a href="recap.html" style="font-family:var(--mono);font-size:11px;color:var(--text2);text-decoration:none;padding:5px 12px;border:1px solid var(--border);border-radius:2px;letter-spacing:1px;text-transform:uppercase;transition:all 0.15s" onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text2)';this.style.borderColor='var(--border)'">Weekly Recap</a>
+    </nav>
+    <div class="live"><span class="live-dot"></span>LIVE</div>
+    <div class="clock" id="clock">—</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ══════════════════════════════════
+       PANEL 1 · ECONOMIC CALENDAR
+  ═══════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="panel-title">Calendario Macro — Settimana 17–21 Mar 2025</div>
+      <div class="panel-meta">US · EU · DE · GB</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px">Ora ET</th>
+          <th style="width:26px"></th>
+          <th>Evento</th>
+          <th style="width:50px">Imp.</th>
+          <th class="r" style="width:72px">Prec.</th>
+          <th class="r" style="width:72px">Atteso</th>
+          <th class="r" style="width:78px">Effett.</th>
+          <th class="r" style="width:68px">Esito</th>
+        </tr>
+      </thead>
+      <tbody id="calBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 2 · CENTRAL BANK RATES
+  ═══════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="panel-title">Tassi Banche Centrali</div>
+      <div class="panel-meta">Tasso corrente · Prossima decisione · Consensus mercato</div>
+    </div>
+    <div class="rates-grid" id="ratesGrid"></div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PANEL 3 · EARNINGS CALENDAR
+  ═══════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-hd">
+      <div class="panel-title">Earnings Calendar — Q1 2025</div>
+      <div class="panel-meta">Mega-cap · Banks · Prossime settimane</div>
+    </div>
+    <div class="ern-hd">
+      <span class="e-tick">Ticker</span>
+      <span class="e-name">Società</span>
+      <span class="e-time">Orario</span>
+      <span class="e-num" style="color:var(--text3)">EPS atteso</span>
+      <span class="e-num" style="color:var(--text3)">EPS effett.</span>
+      <span class="e-num" style="color:var(--text3)">Rev. attesi</span>
+      <span class="e-sur" style="color:var(--text3);text-align:right">Esito</span>
+    </div>
+    <div id="earningsBody"></div>
+  </div>
+
+</div>
+
+<div class="footer">MACROPULSE · Dati simulativi — collegare FRED API + Trading Economics per dati live</div>
+
+<script>
+const CAL = [
+  { date:"LUN 17 MAR", time:"14:30", flag:"🇺🇸", name:"Retail Sales MoM",           imp:"h", prev:"+0.7%",    exp:"-0.1%",  act:"-0.9%",  beat:false },
+  { date:"LUN 17 MAR", time:"15:15", flag:"🇺🇸", name:"Industrial Production MoM",   imp:"m", prev:"-0.4%",    exp:"+0.2%",  act:"+0.7%",  beat:true  },
+  { date:"LUN 17 MAR", time:"16:00", flag:"🇺🇸", name:"NAHB Housing Market Index",    imp:"l", prev:"42",       exp:"42",     act:"39",     beat:false },
+  { date:"MAR 18 MAR", time:"10:00", flag:"🇩🇪", name:"ZEW Economic Sentiment DE",    imp:"m", prev:"26.0",     exp:"24.0",   act:"26.0",   beat:true  },
+  { date:"MAR 18 MAR", time:"10:00", flag:"🇪🇺", name:"ZEW Sentiment Eurozona",       imp:"m", prev:"24.2",     exp:"22.0",   act:"25.1",   beat:true  },
+  { date:"MAR 18 MAR", time:"14:30", flag:"🇺🇸", name:"Building Permits",             imp:"m", prev:"1.47M",    exp:"1.45M",  act:null,     beat:null  },
+  { date:"MAR 18 MAR", time:"14:30", flag:"🇺🇸", name:"Housing Starts",               imp:"m", prev:"1.50M",    exp:"1.38M",  act:null,     beat:null  },
+  { date:"MER 19 MAR", time:"11:00", flag:"🇪🇺", name:"CPI Final YoY Eurozona",       imp:"h", prev:"2.5%",     exp:"2.3%",   act:"2.3%",   beat:null  },
+  { date:"MER 19 MAR", time:"20:00", flag:"🇺🇸", name:"FOMC Rate Decision",           imp:"h", prev:"4.50%",    exp:"4.25%",  act:"4.25%",  beat:null  },
+  { date:"MER 19 MAR", time:"20:30", flag:"🇺🇸", name:"FOMC Press Conference Powell", imp:"h", prev:"—",        exp:"—",      act:null,     beat:null  },
+  { date:"GIO 20 MAR", time:"08:00", flag:"🇬🇧", name:"BoE Rate Decision",            imp:"h", prev:"4.50%",    exp:"4.50%",  act:"4.50%",  beat:null  },
+  { date:"GIO 20 MAR", time:"14:30", flag:"🇺🇸", name:"Initial Jobless Claims",       imp:"m", prev:"220K",     exp:"225K",   act:null,     beat:null  },
+  { date:"GIO 20 MAR", time:"14:30", flag:"🇺🇸", name:"Philadelphia Fed Index",       imp:"m", prev:"18.1",     exp:"9.5",    act:null,     beat:null  },
+  { date:"VEN 21 MAR", time:"09:15", flag:"🇩🇪", name:"PMI Manufacturing Flash DE",   imp:"h", prev:"46.5",     exp:"47.2",   act:null,     beat:null  },
+  { date:"VEN 21 MAR", time:"09:15", flag:"🇩🇪", name:"PMI Services Flash DE",        imp:"h", prev:"52.3",     exp:"52.0",   act:null,     beat:null  },
+  { date:"VEN 21 MAR", time:"10:00", flag:"🇪🇺", name:"PMI Composite Flash EZ",       imp:"h", prev:"50.2",     exp:"50.6",   act:null,     beat:null  },
+  { date:"VEN 21 MAR", time:"15:45", flag:"🇺🇸", name:"PMI Composite Flash US",       imp:"h", prev:"51.6",     exp:"51.8",   act:null,     beat:null  },
+];
+
+const RATES = [
+  { bank:"Federal Reserve",       flag:"🇺🇸", region:"United States", rate:"4.25%", chg:"-25 bps · Gen 2025", dir:"cut",  next:"7 Maggio 2025",    cons:"Invariato al 4.25%",   prob:"78% hold" },
+  { bank:"Banca Centrale Europea",flag:"🇪🇺", region:"Eurozona",       rate:"2.50%", chg:"-25 bps · Mar 2025", dir:"cut",  next:"17 Aprile 2025",   cons:"Taglio a 2.25%",        prob:"64% cut"  },
+  { bank:"Bank of England",       flag:"🇬🇧", region:"United Kingdom", rate:"4.50%", chg:"Invariato · Mar 2025",dir:"hold", next:"8 Maggio 2025",    cons:"Invariato al 4.50%",   prob:"71% hold" },
+  { bank:"Bank of Japan",         flag:"🇯🇵", region:"Japan",          rate:"0.50%", chg:"+25 bps · Gen 2025", dir:"hike", next:"30 Aprile 2025",   cons:"Invariato allo 0.50%", prob:"82% hold" },
+  { bank:"Swiss National Bank",   flag:"🇨🇭", region:"Switzerland",    rate:"0.25%", chg:"-25 bps · Mar 2025", dir:"cut",  next:"19 Giugno 2025",   cons:"Invariato / 0.00%",    prob:"55% hold" },
+  { bank:"Bank of Canada",        flag:"🇨🇦", region:"Canada",         rate:"2.75%", chg:"-25 bps · Mar 2025", dir:"cut",  next:"16 Aprile 2025",   cons:"Taglio a 2.50%",        prob:"58% cut"  },
+];
+
+const EARNINGS = [
+  { week:"SETTIMANA 17–21 MAR 2025", rows:[
+    { tick:"MU",   name:"Micron Technology",  time:"Post-market", expE:"$1.43",  actE:"$1.56",  expR:"$7.89B",  beat:true  },
+    { tick:"FDX",  name:"FedEx Corp",          time:"Post-market", expE:"$4.55",  actE:null,     expR:"$21.9B",  beat:null  },
+    { tick:"NKE",  name:"Nike Inc.",            time:"Post-market", expE:"$0.29",  actE:null,     expR:"$11.0B",  beat:null  },
+  ]},
+  { week:"SETTIMANA 7–11 APR 2025", rows:[
+    { tick:"JPM",  name:"JPMorgan Chase",       time:"Pre-market",  expE:"$4.17",  actE:null,     expR:"$43.7B",  beat:null  },
+    { tick:"WFC",  name:"Wells Fargo",           time:"Pre-market",  expE:"$1.24",  actE:null,     expR:"$20.8B",  beat:null  },
+    { tick:"MS",   name:"Morgan Stanley",        time:"Pre-market",  expE:"$2.20",  actE:null,     expR:"$15.9B",  beat:null  },
+    { tick:"BAC",  name:"Bank of America",       time:"Pre-market",  expE:"$0.82",  actE:null,     expR:"$26.7B",  beat:null  },
+    { tick:"BLK",  name:"BlackRock",             time:"Pre-market",  expE:"$10.21", actE:null,     expR:"$5.1B",   beat:null  },
+  ]},
+  { week:"SETTIMANA 14–17 APR 2025", rows:[
+    { tick:"GS",   name:"Goldman Sachs",         time:"Pre-market",  expE:"$12.35", actE:null,     expR:"$14.8B",  beat:null  },
+    { tick:"NFLX", name:"Netflix Inc.",           time:"Post-market", expE:"$5.65",  actE:null,     expR:"$10.5B",  beat:null  },
+    { tick:"ASML", name:"ASML Holding",           time:"Pre-market",  expE:"€5.97",  actE:null,     expR:"€7.7B",   beat:null  },
+    { tick:"TSM",  name:"Taiwan Semiconductor",   time:"Pre-market",  expE:"$2.12",  actE:null,     expR:"$25.6B",  beat:null  },
+  ]},
+  { week:"SETTIMANA 22–25 APR 2025", rows:[
+    { tick:"GOOG", name:"Alphabet Inc.",          time:"Post-market", expE:"$2.01",  actE:null,     expR:"$89.1B",  beat:null  },
+    { tick:"META", name:"Meta Platforms",         time:"Post-market", expE:"$5.22",  actE:null,     expR:"$41.4B",  beat:null  },
+    { tick:"MSFT", name:"Microsoft Corp.",        time:"Post-market", expE:"$3.20",  actE:null,     expR:"$68.4B",  beat:null  },
+    { tick:"AAPL", name:"Apple Inc.",             time:"Post-market", expE:"$1.62",  actE:null,     expR:"$94.2B",  beat:null  },
+    { tick:"AMZN", name:"Amazon.com",             time:"Post-market", expE:"$1.35",  actE:null,     expR:"$187.2B", beat:null  },
+    { tick:"NVDA", name:"NVIDIA Corp.",           time:"Post-market", expE:"$0.88",  actE:null,     expR:"$43.2B",  beat:null  },
+  ]},
+];
+
+function renderCal() {
+  const tb = document.getElementById('calBody');
+  let last = '';
+  CAL.forEach(ev => {
+    if (ev.date !== last) {
+      tb.insertAdjacentHTML('beforeend', `<tr class="date-row"><td colspan="8">${ev.date}</td></tr>`);
+      last = ev.date;
+    }
+    const dots = [1,2,3].map(i => {
+      const on = ev.imp==='h'?i<=3:ev.imp==='m'?i<=2:i<=1;
+      return `<span class="dot ${on?ev.imp:''}"></span>`;
+    }).join('');
+    let actCell, badge;
+    if (ev.act===null) {
+      actCell = `<td class="r v-pend">—</td>`;
+      badge = `<td class="r"><span class="badge b-pend">atteso</span></td>`;
+    } else if (ev.beat===true) {
+      actCell = `<td class="r v-beat">${ev.act}</td>`;
+      badge = `<td class="r"><span class="badge b-beat">BEAT</span></td>`;
+    } else if (ev.beat===false) {
+      actCell = `<td class="r v-miss">${ev.act}</td>`;
+      badge = `<td class="r"><span class="badge b-miss">MISS</span></td>`;
+    } else {
+      actCell = `<td class="r v-dim">${ev.act}</td>`;
+      badge = `<td class="r"><span class="badge b-neut">—</span></td>`;
+    }
+    tb.insertAdjacentHTML('beforeend', `<tr>
+      <td class="v-dim" style="font-size:11px">${ev.time}</td>
+      <td style="font-size:14px">${ev.flag}</td>
+      <td>${ev.name}</td>
+      <td><div class="dots">${dots}</div></td>
+      <td class="r v-dim">${ev.prev}</td>
+      <td class="r v-dim">${ev.exp}</td>
+      ${actCell}${badge}
+    </tr>`);
+  });
+}
+
+function renderRates() {
+  const g = document.getElementById('ratesGrid');
+  RATES.forEach(r => {
+    const c = r.dir==='cut'?'var(--green)':r.dir==='hike'?'var(--red)':'var(--text2)';
+    const sym = r.dir==='cut'?'▼':r.dir==='hike'?'▲':'●';
+    g.insertAdjacentHTML('beforeend', `
+      <div class="rate-card">
+        <div class="rc-top">
+          <div><div class="rc-bank">${r.bank}</div><div style="font-size:10px;color:var(--text3);margin-top:1px">${r.region}</div></div>
+          <div class="rc-flag">${r.flag}</div>
+        </div>
+        <div class="rc-val">${r.rate}</div>
+        <div class="rc-chg" style="color:${c}"><span style="font-size:9px">${sym}</span> ${r.chg}</div>
+        <div class="rc-div"></div>
+        <div class="rc-lbl">Prossima decisione</div>
+        <div class="rc-date">${r.next}</div>
+        <div class="rc-exp">${r.cons} <span style="color:var(--text3)">· ${r.prob}</span></div>
+      </div>`);
+  });
+}
+
+function renderEarnings() {
+  const c = document.getElementById('earningsBody');
+  EARNINGS.forEach(w => {
+    let html = `<div class="week-lbl">${w.week}</div>`;
+    w.rows.forEach(e => {
+      let actHtml, surHtml;
+      if (e.actE===null) {
+        actHtml = `<span class="v-pend">—</span>`;
+        surHtml = `<span class="badge b-pend">atteso</span>`;
+      } else if (e.beat===true) {
+        actHtml = `<span class="v-beat">${e.actE}</span>`;
+        surHtml = `<span class="badge b-beat">BEAT</span>`;
+      } else {
+        actHtml = `<span class="v-miss">${e.actE}</span>`;
+        surHtml = `<span class="badge b-miss">MISS</span>`;
+      }
+      html += `<div class="ern-row">
+        <span class="e-tick">${e.tick}</span>
+        <span class="e-name">${e.name}</span>
+        <span class="e-time">${e.time}</span>
+        <span class="e-num v-dim">${e.expE}</span>
+        <span class="e-num">${actHtml}</span>
+        <span class="e-num v-dim">${e.expR}</span>
+        <span class="e-sur">${surHtml}</span>
+      </div>`;
+    });
+    c.insertAdjacentHTML('beforeend', html);
+  });
+}
+
+function tick() {
+  const n = new Date();
+  const p = x => String(x).padStart(2,'0');
+  document.getElementById('clock').textContent =
+    `${p(n.getDate())}/${p(n.getMonth()+1)}/${n.getFullYear()}  ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())} CET`;
+}
+setInterval(tick, 1000); tick();
+renderCal(); renderRates(); renderEarnings();
+</script>
+</body>
+</html>

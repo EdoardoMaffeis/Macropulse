@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MacroPulse — Weekly Recap</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:      #0a0c0f;
+    --bg1:     #0f1217;
+    --bg2:     #141820;
+    --bg3:     #1c2230;
+    --border:  #1e2736;
+    --border2: #2a3547;
+    --text:    #c8d4e8;
+    --text2:   #7a8fa8;
+    --text3:   #3d4f65;
+    --accent:  #00d4ff;
+    --green:   #00c57a;
+    --green2:  #003d26;
+    --red:     #ff4757;
+    --red2:    #3d0f16;
+    --amber:   #ffa940;
+    --amber2:  #2e1e00;
+    --purple:  #a78bfa;
+    --purple2: #1e1535;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:999;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.022) 2px,rgba(0,0,0,0.022) 4px);
+  }
+
+  /* HEADER */
+  .header {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:13px 24px; border-bottom:1px solid var(--border);
+    background:var(--bg1); position:sticky; top:0; z-index:100;
+  }
+  .brand { font-family:var(--mono); font-size:14px; font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent); }
+  .brand-sub { font-family:var(--mono); font-size:9px; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; margin-top:3px; }
+  .nav { display:flex; gap:6px; }
+  .nav a {
+    font-family:var(--mono); font-size:11px; color:var(--text2); text-decoration:none;
+    padding:5px 12px; border:1px solid var(--border); border-radius:2px;
+    letter-spacing:1px; text-transform:uppercase; transition:all 0.15s;
+  }
+  .nav a:hover { color:var(--accent); border-color:var(--accent); }
+  .nav a.active { color:var(--accent); border-color:var(--accent); background:rgba(0,212,255,0.05); }
+  .header-right { display:flex; align-items:center; gap:16px; }
+  .live { display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:10px; color:var(--green); letter-spacing:1px; }
+  .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 7px var(--green); animation:blink 1.6s ease-in-out infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
+
+  /* MAIN LAYOUT */
+  .main { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+
+  /* INPUT PANEL */
+  .input-panel {
+    background:var(--bg1); border:1px solid var(--border); border-radius:2px;
+    margin-bottom:20px; overflow:hidden;
+  }
+  .input-hd {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 18px; background:var(--bg2); border-bottom:1px solid var(--border);
+  }
+  .input-title {
+    font-family:var(--mono); font-size:10px; font-weight:600;
+    letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+    display:flex; align-items:center; gap:9px;
+  }
+  .input-title::before { content:''; width:3px; height:11px; background:var(--accent); border-radius:1px; display:inline-block; }
+  .input-body { padding:16px 18px; }
+  .input-row { display:flex; gap:12px; margin-bottom:12px; align-items:flex-start; }
+  .input-col { display:flex; flex-direction:column; gap:6px; }
+  .input-col label { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; }
+  .week-input {
+    font-family:var(--mono); font-size:12px; padding:7px 12px;
+    background:var(--bg3); border:1px solid var(--border2); border-radius:2px;
+    color:var(--text); outline:none; width:200px;
+  }
+  .week-input:focus { border-color:var(--accent); }
+  textarea.raw-input {
+    width:100%; min-height:120px; font-family:var(--mono); font-size:11px;
+    padding:12px 14px; background:var(--bg3); border:1px solid var(--border2);
+    border-radius:2px; color:var(--text2); outline:none; resize:vertical;
+    line-height:1.6;
+  }
+  textarea.raw-input:focus { border-color:var(--accent); color:var(--text); }
+  textarea.raw-input::placeholder { color:var(--text3); }
+  .btn-row { display:flex; gap:10px; align-items:center; }
+  .btn-generate {
+    font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:1.5px;
+    text-transform:uppercase; padding:9px 22px; cursor:pointer;
+    background:var(--accent); color:#000; border:none; border-radius:2px;
+    transition:opacity 0.15s; white-space:nowrap;
+  }
+  .btn-generate:hover { opacity:0.85; }
+  .btn-generate:disabled { opacity:0.4; cursor:not-allowed; }
+  .btn-clear {
+    font-family:var(--mono); font-size:11px; letter-spacing:1px; text-transform:uppercase;
+    padding:9px 16px; cursor:pointer; background:transparent;
+    color:var(--text2); border:1px solid var(--border2); border-radius:2px; transition:all 0.15s;
+  }
+  .btn-clear:hover { border-color:var(--red); color:var(--red); }
+  .status-msg { font-family:var(--mono); font-size:11px; color:var(--text3); }
+  .status-msg.loading { color:var(--amber); }
+  .status-msg.done { color:var(--green); }
+  .status-msg.err { color:var(--red); }
+
+  /* ARCHIVE BAR */
+  .archive-bar {
+    display:flex; align-items:center; gap:8px; margin-bottom:20px;
+    padding:10px 16px; background:var(--bg1); border:1px solid var(--border); border-radius:2px;
+    overflow-x:auto;
+  }
+  .archive-label { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; margin-right:4px; }
+  .archive-btn {
+    font-family:var(--mono); font-size:10px; padding:4px 10px; cursor:pointer;
+    background:transparent; color:var(--text2); border:1px solid var(--border);
+    border-radius:2px; white-space:nowrap; transition:all 0.12s; letter-spacing:0.5px;
+  }
+  .archive-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .archive-btn.current { border-color:var(--accent); color:var(--accent); background:rgba(0,212,255,0.07); }
+
+  /* RECAP OUTPUT */
+  .recap-output { display:none; }
+  .recap-output.visible { display:block; }
+
+  /* WEEK HEADER */
+  .week-banner {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    padding:20px 22px 16px; background:var(--bg2);
+    border:1px solid var(--border); border-radius:2px; margin-bottom:16px;
+  }
+  .week-label { font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+  .week-title { font-family:var(--sans); font-size:22px; font-weight:600; color:var(--text); line-height:1.2; margin-bottom:8px; }
+  .week-summary { font-size:13px; color:var(--text2); line-height:1.7; max-width:680px; }
+  .week-pills { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .pill {
+    font-family:var(--mono); font-size:10px; padding:3px 10px; border-radius:2px;
+    letter-spacing:0.5px; font-weight:500;
+  }
+  .pill-red    { background:var(--red2);    color:var(--red);    border:1px solid #ff475722; }
+  .pill-amber  { background:var(--amber2);  color:var(--amber);  border:1px solid #ffa94022; }
+  .pill-green  { background:var(--green2);  color:var(--green);  border:1px solid #00c57a22; }
+  .pill-purple { background:var(--purple2); color:var(--purple); border:1px solid #a78bfa22; }
+  .pill-blue   { background:#0c1e35;        color:var(--accent); border:1px solid #00d4ff22; }
+
+  /* CONTENT GRID */
+  .content-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+  .content-grid.full { grid-template-columns:1fr; }
+
+  /* SECTION CARD */
+  .section-card { background:var(--bg1); border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+  .section-hd {
+    display:flex; align-items:center; gap:10px; padding:9px 16px;
+    background:var(--bg2); border-bottom:1px solid var(--border);
+  }
+  .section-icon { width:22px; height:22px; border-radius:2px; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; }
+  .icon-geo    { background:#1a0f20; color:var(--purple); border:1px solid #a78bfa22; }
+  .icon-macro  { background:#0c1e35; color:var(--accent);  border:1px solid #00d4ff22; }
+  .icon-micro  { background:var(--green2); color:var(--green); border:1px solid #00c57a22; }
+  .icon-market { background:var(--amber2); color:var(--amber); border:1px solid #ffa94022; }
+  .icon-labor  { background:#1a1200; color:#ffe066; border:1px solid #ffe06622; }
+  .section-title { font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; }
+  .s-geo    { color:var(--purple); }
+  .s-macro  { color:var(--accent); }
+  .s-micro  { color:var(--green); }
+  .s-market { color:var(--amber); }
+  .s-labor  { color:#ffe066; }
+  .section-body { padding:14px 16px; }
+
+  /* BULLET ITEMS */
+  .item { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+  .item:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+  .item-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:5px; line-height:1.4; }
+  .item-body { font-size:12px; color:var(--text2); line-height:1.75; }
+  .item-body strong { color:var(--text); font-weight:500; }
+
+  /* DATA CHIPS inline */
+  .chip {
+    display:inline-block; font-family:var(--mono); font-size:10px;
+    padding:1px 7px; border-radius:2px; margin:0 2px; vertical-align:middle;
+  }
+  .chip-up   { background:var(--green2); color:var(--green); }
+  .chip-down { background:var(--red2);   color:var(--red);   }
+  .chip-neut { background:var(--bg3);    color:var(--text2); border:1px solid var(--border2); }
+
+  /* MARKET SNAPSHOT TABLE */
+  .snap-table { width:100%; border-collapse:collapse; font-family:var(--mono); font-size:11px; }
+  .snap-table tr { border-bottom:1px solid var(--border); }
+  .snap-table tr:last-child { border-bottom:none; }
+  .snap-table td { padding:6px 8px; }
+  .snap-table td:first-child { color:var(--text2); width:55%; }
+  .snap-table td:last-child { text-align:right; }
+  .v-up   { color:var(--green); }
+  .v-down { color:var(--red);   }
+  .v-neut { color:var(--text2); }
+
+  /* LOADING SKELETON */
+  .skeleton { background:var(--bg2); border:1px solid var(--border); border-radius:2px; padding:20px; }
+  .skel-line { height:11px; background:var(--bg3); border-radius:2px; margin-bottom:10px; animation:shimmer 1.4s ease-in-out infinite; }
+  @keyframes shimmer { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align:center; padding:60px 20px;
+    border:1px dashed var(--border2); border-radius:2px;
+    background:var(--bg1);
+  }
+  .empty-icon { font-family:var(--mono); font-size:32px; color:var(--text3); margin-bottom:14px; }
+  .empty-title { font-family:var(--mono); font-size:13px; color:var(--text2); margin-bottom:8px; letter-spacing:1px; }
+  .empty-sub { font-size:12px; color:var(--text3); line-height:1.6; }
+
+  .footer { text-align:center; padding:18px; font-family:var(--mono); font-size:10px; color:var(--text3); letter-spacing:0.5px; border-top:1px solid var(--border); margin-top:8px; }
+
+  @media(max-width:720px) {
+    .content-grid { grid-template-columns:1fr; }
+    .nav { display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="brand">MacroPulse</div>
+    <div class="brand-sub">Financial Intelligence Dashboard</div>
+  </div>
+  <div class="header-right">
+    <nav class="nav">
+      <a href="index.html">Dashboard</a>
+      <a href="recap.html" class="active">Weekly Recap</a>
+    </nav>
+    <div class="live"><span class="live-dot"></span>AI</div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- INPUT PANEL -->
+  <div class="input-panel">
+    <div class="input-hd">
+      <div class="input-title">Aggiorna recap settimanale</div>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">Incolla il testo della mail → AI struttura automaticamente</span>
+    </div>
+    <div class="input-body">
+      <div class="input-row">
+        <div class="input-col">
+          <label>Settimana di riferimento</label>
+          <input type="text" class="week-input" id="weekLabel" placeholder="es. 17–21 Mar 2025" />
+        </div>
+      </div>
+      <div class="input-col" style="margin-bottom:12px">
+        <label>Testo completo della mail (incolla qui)</label>
+        <textarea class="raw-input" id="rawInput" placeholder="Incolla qui il testo della tua analisi settimanale macro/micro/mercati...&#10;&#10;La AI leggerà il documento e creerà automaticamente le sezioni: Geopolitica, Macro, Mercato del Lavoro, Micro/Utili, Mercati Finanziari."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn-generate" id="btnGenerate" onclick="generateRecap()">Genera Recap →</button>
+        <button class="btn-clear" onclick="clearAll()">Cancella</button>
+        <span class="status-msg" id="statusMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHIVE BAR -->
+  <div class="archive-bar" id="archiveBar">
+    <span class="archive-label">Archivio</span>
+    <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">— nessuna settimana salvata</span>
+  </div>
+
+  <!-- RECAP OUTPUT -->
+  <div class="recap-output" id="recapOutput">
+
+    <!-- WEEK BANNER -->
+    <div class="week-banner" id="weekBanner">
+      <div>
+        <div class="week-label">Weekly Macro Recap</div>
+        <div class="week-title" id="outWeekTitle">—</div>
+        <div class="week-summary" id="outSummary"></div>
+        <div class="week-pills" id="outPills"></div>
+      </div>
+    </div>
+
+    <!-- SECTIONS -->
+    <div class="content-grid" id="gridTop"></div>
+    <div class="content-grid full" id="gridMarkets"></div>
+
+  </div>
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">⬡</div>
+    <div class="empty-title">Nessun recap disponibile</div>
+    <div class="empty-sub">Incolla il testo della tua mail settimanale nel pannello sopra<br>e premi "Genera Recap" per creare la pagina automaticamente.</div>
+  </div>
+
+</div>
+
+<div class="footer">MACROPULSE · Weekly Recap · Powered by Claude AI · Dati e analisi a scopo informativo</div>
+
+<script>
+// ─── STORAGE ─────────────────────────────────────────
+const STORAGE_KEY = 'macropulse_recaps';
+
+function loadRecaps() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveRecaps(recaps) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(recaps));
+}
+
+// ─── ARCHIVE BAR ─────────────────────────────────────
+function renderArchive(currentIdx) {
+  const recaps = loadRecaps();
+  const bar = document.getElementById('archiveBar');
+  if (!recaps.length) {
+    bar.innerHTML = '<span class="archive-label">Archivio</span><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">— nessuna settimana salvata</span>';
+    return;
+  }
+  let html = '<span class="archive-label">Archivio</span>';
+  recaps.forEach((r, i) => {
+    const cls = i === currentIdx ? 'archive-btn current' : 'archive-btn';
+    html += `<button class="${cls}" onclick="loadRecap(${i})">${r.week}</button>`;
+  });
+  bar.innerHTML = html;
+}
+
+// ─── LOAD RECAP FROM ARCHIVE ─────────────────────────
+function loadRecap(idx) {
+  const recaps = loadRecaps();
+  if (!recaps[idx]) return;
+  renderRecapData(recaps[idx]);
+  renderArchive(idx);
+}
+
+// ─── GENERATE ────────────────────────────────────────
+async function generateRecap() {
+  const raw = document.getElementById('rawInput').value.trim();
+  const week = document.getElementById('weekLabel').value.trim() || 'Settimana corrente';
+  if (!raw) { setStatus('Incolla il testo della mail prima di procedere.', 'err'); return; }
+
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true;
+  setStatus('Analisi in corso...', 'loading');
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('recapOutput').classList.remove('visible');
+
+  const PROMPT = `Sei un analista finanziario senior. Analizza il seguente testo di una newsletter macro settimanale e restituisci SOLO un oggetto JSON valido (nessun testo prima o dopo, nessun markdown) con questa struttura esatta:
+
+{
+  "week": "etichetta settimana",
+  "title": "titolo editoriale breve che cattura il tema dominante della settimana (max 8 parole)",
+  "summary": "sintesi esecutiva in 2-3 frasi, densa e professionale",
+  "pills": [
+    {"label": "tema chiave", "type": "red|amber|green|purple|blue"}
+  ],
+  "geopolitica": {
+    "items": [
+      {"title": "titolo evento", "body": "descrizione concisa con i fatti chiave, numeri rilevanti evidenziati con **grassetto**"}
+    ]
+  },
+  "macro": {
+    "items": [
+      {"title": "indicatore", "body": "analisi con dati numerici, **grassetto** per valori chiave"}
+    ]
+  },
+  "lavoro": {
+    "items": [
+      {"title": "area geografica — indicatore", "body": "dato e commento con **grassetto** per valori chiave"}
+    ]
+  },
+  "micro": {
+    "items": [
+      {"title": "evento corporate", "body": "dettagli rilevanti"}
+    ]
+  },
+  "mercati": {
+    "snapshot": [
+      {"label": "asset/indice", "value": "variazione settimanale", "dir": "up|down|neut"}
+    ],
+    "items": [
+      {"title": "tema di mercato", "body": "analisi con dati"}
+    ]
+  }
+}
+
+Regole:
+- pills: max 5, scegli i temi dominanti della settimana. Usa: red=rischio/crisi, amber=attenzione/incertezza, green=positivo, purple=geopolitica, blue=macro/banche centrali
+- geopolitica: max 4 items, solo eventi con impatto sui mercati
+- macro: max 5 items, indicatori più rilevanti con numeri precisi
+- lavoro: max 4 items, divisi per area geografica
+- micro: max 4 items, earnings e notizie corporate rilevanti
+- mercati.snapshot: max 10 righe con le variazioni settimanali principali
+- mercati.items: max 4 analisi sui temi dominanti dei mercati
+- Sii preciso, usa sempre i numeri quando presenti nel testo
+- NON inventare dati non presenti nel testo
+
+TESTO DA ANALIZZARE:
+${raw.substring(0, 12000)}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: 'Rispondi SOLO con JSON valido. Nessun testo, nessun markdown, nessun backtick. Solo il JSON grezzo.',
+        messages: [{ role: 'user', content: PROMPT }]
+      })
+    });
+
+    const data = await res.json();
+    const rawText = data.content?.map(b => b.text || '').join('') || '';
+    const clean = rawText.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    parsed.week = week || parsed.week || 'Settimana corrente';
+    parsed.rawText = raw;
+
+    // Save to archive
+    const recaps = loadRecaps();
+    const existingIdx = recaps.findIndex(r => r.week === parsed.week);
+    if (existingIdx >= 0) recaps[existingIdx] = parsed;
+    else recaps.unshift(parsed);
+    if (recaps.length > 20) recaps.pop();
+    saveRecaps(recaps);
+
+    renderRecapData(parsed);
+    renderArchive(0);
+    setStatus('Recap generato e salvato ✓', 'done');
+    document.getElementById('rawInput').value = '';
+  } catch(e) {
+    console.error(e);
+    setStatus('Errore: ' + e.message, 'err');
+    document.getElementById('emptyState').style.display = 'block';
+  }
+
+  btn.disabled = false;
+}
+
+// ─── RENDER RECAP ────────────────────────────────────
+function renderRecapData(d) {
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('outWeekTitle').textContent = d.title || d.week;
+  document.getElementById('outSummary').textContent = d.summary || '';
+
+  // Pills
+  const pillsEl = document.getElementById('outPills');
+  pillsEl.innerHTML = (d.pills || []).map(p =>
+    `<span class="pill pill-${p.type || 'blue'}">${p.label}</span>`
+  ).join('');
+
+  // Top grid: 2 columns
+  const gridTop = document.getElementById('gridTop');
+  gridTop.innerHTML = '';
+
+  const sections = [
+    { key:'geopolitica', icon:'◈', iconCls:'icon-geo', titleCls:'s-geo', label:'Geopolitica & Crisi' },
+    { key:'macro',       icon:'◉', iconCls:'icon-macro', titleCls:'s-macro', label:'Macroeconomia' },
+    { key:'lavoro',      icon:'◎', iconCls:'icon-labor', titleCls:'s-labor', label:'Mercato del Lavoro' },
+    { key:'micro',       icon:'◆', iconCls:'icon-micro', titleCls:'s-micro', label:'Micro & Utili' },
+  ];
+
+  sections.forEach(s => {
+    const sec = d[s.key];
+    if (!sec || !sec.items || !sec.items.length) return;
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    let itemsHtml = sec.items.map(item => `
+      <div class="item">
+        <div class="item-title">${item.title}</div>
+        <div class="item-body">${formatBody(item.body)}</div>
+      </div>`).join('');
+    card.innerHTML = `
+      <div class="section-hd">
+        <div class="section-icon ${s.iconCls}">${s.icon}</div>
+        <span class="section-title ${s.titleCls}">${s.label}</span>
+      </div>
+      <div class="section-body">${itemsHtml}</div>`;
+    gridTop.appendChild(card);
+  });
+
+  // Markets section — full width
+  const gridMkt = document.getElementById('gridMarkets');
+  gridMkt.innerHTML = '';
+  if (d.mercati) {
+    const card = document.createElement('div');
+    card.className = 'section-card';
+    // Snapshot table
+    let snapHtml = '';
+    if (d.mercati.snapshot && d.mercati.snapshot.length) {
+      snapHtml = `<table class="snap-table" style="margin-bottom:16px">` +
+        d.mercati.snapshot.map(s => {
+          const cls = s.dir === 'up' ? 'v-up' : s.dir === 'down' ? 'v-down' : 'v-neut';
+          const sym = s.dir === 'up' ? '▲' : s.dir === 'down' ? '▼' : '●';
+          return `<tr><td>${s.label}</td><td class="${cls}">${sym} ${s.value}</td></tr>`;
+        }).join('') + `</table>`;
+    }
+    // Analysis items
+    let mktItems = (d.mercati.items || []).map(item => `
+      <div class="item">
+        <div class="item-title">${item.title}</div>
+        <div class="item-body">${formatBody(item.body)}</div>
+      </div>`).join('');
+
+    card.innerHTML = `
+      <div class="section-hd">
+        <div class="section-icon icon-market">◈</div>
+        <span class="section-title s-market">Mercati Finanziari</span>
+      </div>
+      <div class="section-body">
+        <div style="display:grid;grid-template-columns:220px 1fr;gap:20px;align-items:start">
+          <div>${snapHtml}</div>
+          <div>${mktItems}</div>
+        </div>
+      </div>`;
+    gridMkt.appendChild(card);
+  }
+
+  document.getElementById('recapOutput').classList.add('visible');
+  window.scrollTo({ top: document.getElementById('recapOutput').offsetTop - 80, behavior: 'smooth' });
+}
+
+// Format body: **bold** → <strong>
+function formatBody(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status-msg ' + (type || '');
+  if (type === 'done') setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+function clearAll() {
+  document.getElementById('rawInput').value = '';
+  document.getElementById('weekLabel').value = '';
+  setStatus('', '');
+}
+
+// ─── INIT ────────────────────────────────────────────
+(function init() {
+  const recaps = loadRecaps();
+  if (recaps.length) {
+    renderArchive(0);
+    renderRecapData(recaps[0]);
+  } else {
+    renderArchive(-1);
+  }
+})();
+</script>
+</body>
+</html>
